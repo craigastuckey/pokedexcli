@@ -1,10 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strings"
 
@@ -45,25 +42,7 @@ func commandHelp(conf *config) error {
 
 func commandMap(conf *config) error {
 	for i := 0; i < 20; i++ {
-		res, err := http.Get(conf.next)
-		if err != nil {
-			fmt.Println("Error fetching data:", err)
-		}
-
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-		}
-		if res.StatusCode != http.StatusOK {
-			fmt.Println("Error: received non-OK HTTP status:", res.Status)
-		}
-		res.Body.Close()
-
-		var locationArea Location.LocationArea
-		err = json.Unmarshal(body, &locationArea)
-		if err != nil {
-			fmt.Println("Error unmarshaling JSON:", err)
-		}
+		locationArea := Location.GetLocationArea(conf)
 
 		fmt.Println(locationArea.Name)
 
@@ -74,25 +53,7 @@ func commandMap(conf *config) error {
 }
 
 func commandMapb(conf *config) error {
-	res, err := http.Get(conf.next)
-	if err != nil {
-		fmt.Println("Error fetching data:", err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-	}
-	if res.StatusCode != http.StatusOK {
-		fmt.Println("Error: received non-OK HTTP status:", res.Status)
-	}
-	res.Body.Close()
-
-	var locationArea Location.LocationArea
-	err = json.Unmarshal(body, &locationArea)
-	if err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-	}
+	locationArea := Location.GetLocationArea(conf)
 
 	if locationArea.ID <= 1 {
 		fmt.Println("you're on the first page")

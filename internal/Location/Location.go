@@ -1,5 +1,12 @@
 package Location
 
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
+
 type LocationArea struct {
 	ID                   int    `json:"id"`
 	Name                 string `json:"name"`
@@ -51,4 +58,27 @@ type LocationArea struct {
 			} `json:"encounter_details"`
 		} `json:"version_details"`
 	} `json:"pokemon_encounters"`
+}
+
+func GetLocationArea(conf *config) LocationArea {
+	res, err := http.Get(conf.next)
+	if err != nil {
+		fmt.Println("Error fetching data:", err)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		fmt.Println("Error: received non-OK HTTP status:", res.Status)
+	}
+	res.Body.Close()
+
+	var locationArea Location.LocationArea
+	err = json.Unmarshal(body, &locationArea)
+	if err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+	}
+	return locationArea
 }
