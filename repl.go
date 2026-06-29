@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/craigastuckey/pokedexcli/internal/Location"
 )
 
 type cliCommand struct {
@@ -57,7 +59,7 @@ func commandMap(conf *config) error {
 		}
 		res.Body.Close()
 
-		var locationArea LocationArea
+		var locationArea Location.LocationArea
 		err = json.Unmarshal(body, &locationArea)
 		if err != nil {
 			fmt.Println("Error unmarshaling JSON:", err)
@@ -86,7 +88,7 @@ func commandMapb(conf *config) error {
 	}
 	res.Body.Close()
 
-	var locationArea LocationArea
+	var locationArea Location.LocationArea
 	err = json.Unmarshal(body, &locationArea)
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)

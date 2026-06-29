@@ -1,4 +1,4 @@
-package main
+package Location
 
 type LocationArea struct {
 	ID                   int    `json:"id"`
