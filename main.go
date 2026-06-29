@@ -9,6 +9,11 @@ import (
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
+	conf := config{
+		next: "https://pokeapi.co/api/v2/location-area/1/",
+		prev: "",
+	}
+
 	commands := map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -19,6 +24,16 @@ func main() {
 			name:        "help",
 			description: "Show available commands",
 			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Show the map of the current location",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Show the map of the previous location",
+			callback:    commandMapb,
 		},
 	}
 
@@ -31,7 +46,7 @@ func main() {
 		cleanInput := cleanInput(input)
 
 		if cmd, exists := commands[cleanInput[0]]; exists {
-			cmd.callback()
+			cmd.callback(&conf)
 		} else {
 			fmt.Println("Unknown command")
 		}

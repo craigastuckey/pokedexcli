@@ -13,6 +13,7 @@ func TestCleanInput(t *testing.T) {
 		{"   ", []string{}},
 		{"hello world", []string{"hello", "world"}},
 		{"  hello   world  ", []string{"hello", "world"}},
+		{"HELLO WORLD", []string{"hello", "world"}},
 	}
 	for _, c := range cases {
 		actual := cleanInput(c.input)
