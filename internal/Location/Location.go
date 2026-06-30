@@ -60,8 +60,8 @@ type LocationArea struct {
 	} `json:"pokemon_encounters"`
 }
 
-func GetLocationArea(conf *config) LocationArea {
-	res, err := http.Get(conf.next)
+func GetLocationArea(url string) LocationArea {
+	res, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error fetching data:", err)
 	}
@@ -75,7 +75,7 @@ func GetLocationArea(conf *config) LocationArea {
 	}
 	res.Body.Close()
 
-	var locationArea Location.LocationArea
+	var locationArea LocationArea
 	err = json.Unmarshal(body, &locationArea)
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)

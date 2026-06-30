@@ -42,7 +42,7 @@ func commandHelp(conf *config) error {
 
 func commandMap(conf *config) error {
 	for i := 0; i < 20; i++ {
-		locationArea := Location.GetLocationArea(conf)
+		locationArea := Location.GetLocationArea(conf.next)
 
 		fmt.Println(locationArea.Name)
 
@@ -53,7 +53,7 @@ func commandMap(conf *config) error {
 }
 
 func commandMapb(conf *config) error {
-	locationArea := Location.GetLocationArea(conf)
+	locationArea := Location.GetLocationArea(conf.next)
 
 	if locationArea.ID <= 1 {
 		fmt.Println("you're on the first page")
