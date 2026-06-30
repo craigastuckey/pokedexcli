@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/craigastuckey/pokedexcli/internal/pokecache"
 )
 
 func main() {
@@ -15,6 +17,7 @@ func main() {
 	}
 
 	commands := getCommands()
+	cache := pokecache.NewCache(5)
 
 	fmt.Println("Welcome to the Pokedex!")
 
@@ -25,7 +28,7 @@ func main() {
 		cleanInput := cleanInput(input)
 
 		if cmd, exists := commands[cleanInput[0]]; exists {
-			cmd.callback(&conf)
+			cmd.callback(&conf, cache)
 		} else {
 			fmt.Println("Unknown command")
 		}

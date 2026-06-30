@@ -1,4 +1,4 @@
-package Location
+package location
 
 import (
 	"encoding/json"
@@ -75,10 +75,24 @@ func GetLocationArea(url string) LocationArea {
 	}
 	res.Body.Close()
 
+	locationArea := UnmarshalData(body)
+
+	return locationArea
+}
+
+func UnmarshalData(data []byte) LocationArea {
 	var locationArea LocationArea
-	err = json.Unmarshal(body, &locationArea)
+	err := json.Unmarshal(data, &locationArea)
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
 	}
 	return locationArea
+}
+
+func MarshalData(locationArea LocationArea) []byte {
+	data, err := json.Marshal(locationArea)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+	}
+	return data
 }

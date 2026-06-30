@@ -5,13 +5,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/craigastuckey/pokedexcli/internal/Location"
+	"github.com/craigastuckey/pokedexcli/internal/location"
+	"github.com/craigastuckey/pokedexcli/internal/pokecache"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *pokecache.Cache) error
 }
 
 type config struct {
@@ -53,13 +54,13 @@ func getCommands() map[string]cliCommand {
 	return commands
 }
 
-func commandExit(conf *config) error {
+func commandExit(conf *config, cache *pokecache.Cache) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config) error {
+func commandHelp(conf *config, cache *pokecache.Cache) error {
 	fmt.Println("Usage:\n\n\nhelp: Displays a help message")
 	fmt.Println("exit: Exit the Pokedex")
 	fmt.Println("map: Displays the map of the current location")
@@ -67,11 +68,19 @@ func commandHelp(conf *config) error {
 	return nil
 }
 
-func commandMap(conf *config) error {
-	for i := 0; i < 20; i++ {
-		locationArea := Location.GetLocationArea(conf.next)
+func commandMap(conf *config, cache *pokecache.Cache) error {
+	var locationArea location.LocationArea
 
-		fmt.Println(locationArea.Name)
+	for i := 0; i < 20; i++ {
+		entry, exists := cache.Get(conf.next)
+		if exists {
+			locationArea = location.UnmarshalData(entry)
+			fmt.Println(locationArea.Name)
+		} else {
+			locationArea = location.GetLocationArea(conf.next)
+			cache.Add(conf.next, location.MarshalData(locationArea))
+			fmt.Println(locationArea.Name)
+		}
 
 		conf.prev = conf.next
 		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+1)
@@ -79,8 +88,8 @@ func commandMap(conf *config) error {
 	return nil
 }
 
-func commandMapb(conf *config) error {
-	locationArea := Location.GetLocationArea(conf.next)
+func commandMapb(conf *config, cache *pokecache.Cache) error {
+	locationArea := location.GetLocationArea(conf.next)
 
 	if locationArea.ID <= 1 {
 		fmt.Println("you're on the first page")
@@ -99,7 +108,7 @@ func commandMapb(conf *config) error {
 			temp.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-21)
 			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-21)
 		}
-		commandMap(&temp)
+		commandMap(&temp, cache)
 	}
 	return nil
 }
