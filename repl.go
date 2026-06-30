@@ -26,6 +26,33 @@ func cleanInput(text string) []string {
 	return words
 }
 
+func getCommands() map[string]cliCommand {
+	commands := map[string]cliCommand{
+		"exit": {
+			name:        "exit",
+			description: "Exit the program",
+			callback:    commandExit,
+		},
+		"help": {
+			name:        "help",
+			description: "Show available commands",
+			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Show the map of the current location",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Show the map of the previous location",
+			callback:    commandMapb,
+		},
+	}
+
+	return commands
+}
+
 func commandExit(conf *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
