@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 )
 
@@ -291,24 +292,24 @@ type Pokemon struct {
 	} `json:"past_abilities"`
 }
 
-func GetPokemon(url string) Pokemon {
+func GetPokemon(url string) (Pokemon, error) {
 	res, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error fetching data:", err)
+		return Pokemon{}, fmt.Errorf("error fetching data: %w", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		return Pokemon{}, fmt.Errorf("error reading response body: %w", err)
 	}
 	if res.StatusCode != http.StatusOK {
-		fmt.Println("Error: received non-OK HTTP status:", res.Status)
+		return Pokemon{}, fmt.Errorf("error: received non-OK HTTP status: %s", res.Status)
 	}
 	res.Body.Close()
 
 	pokemon := UnmarshalData(body)
 
-	return pokemon
+	return pokemon, nil
 }
 
 func UnmarshalData(data []byte) Pokemon {
@@ -326,4 +327,26 @@ func MarshalData(pokemon Pokemon) []byte {
 		fmt.Println("Error marshaling JSON:", err)
 	}
 	return data
+}
+
+func ThrowPokeball(pm Pokemon) bool {
+	// Simulate a random chance of catching the Pokemon
+	catchChance := 0.5 // 50% chance to catch
+	if pm.BaseExperience > 100 {
+		catchChance = 0.3 // Harder to catch if base experience is high
+	}
+
+	return rand.Float64() < catchChance
+}
+
+func GetStats(pokemon Pokemon) {
+	fmt.Printf("Name: %s\nHeight: %d\nWeight: %d\n", pokemon.Name, pokemon.Height, pokemon.Weight)
+	fmt.Printf("Stats:\n")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Printf("Types:\n")
+	for _, typ := range pokemon.Types {
+		fmt.Printf("  - %s\n", typ.Type.Name)
+	}
 }
