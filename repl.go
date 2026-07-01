@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 
@@ -63,6 +62,16 @@ func getCommands() map[string]cliCommand {
 			description: "Catch the pokemon passed in the argument",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect the pokemon passed in the argument",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Show the list of caught pokemon",
+			callback:    commandPokedex,
+		},
 	}
 
 	return commands
@@ -81,6 +90,8 @@ func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 	fmt.Println("mapb: Displays the map of the previous location")
 	fmt.Println("explore <location>: Explore the location passed in the argument")
 	fmt.Println("catch <pokemon>: Catch the pokemon passed in the argument")
+	fmt.Println("inspect <pokemon>: Inspect the pokemon passed in the argument")
+	fmt.Println("pokedex: Displays the list of caught pokemon")
 	return nil
 }
 
@@ -161,32 +172,53 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
 	}
 
 	var pm pokemon.Pokemon
+	var err error
 
 	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
 	if exists {
 		pm = pokemon.UnmarshalData(entry)
 	} else {
-		pm = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+		pm, err = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+		if err != nil {
+			fmt.Println("Pokemon not found")
+			return fmt.Errorf("error fetching Pokemon: %w", err)
+		}
 		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]), pokemon.MarshalData(pm))
 	}
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", pm.Name)
 
-	if ok := throwPokeball(pm); !ok {
+	if ok := pokemon.ThrowPokeball(pm); !ok {
 		fmt.Printf("%s escaped!\n", pm.Name)
 	} else {
 		fmt.Printf("%s was caught!\n", pm.Name)
+		fmt.Println("You may now inspect it with the inspect command")
 		pokedex[pm.Name] = pm
 	}
 	return nil
 }
 
-func throwPokeball(pm pokemon.Pokemon) bool {
-	// Simulate a random chance of catching the Pokemon
-	catchChance := 0.5 // 50% chance to catch
-	if pm.BaseExperience > 100 {
-		catchChance = 0.3 // Harder to catch if base experience is high
+func commandInspect(conf *config, cache *pokecache.Cache, args ...string) error {
+	if len(args) == 0 {
+		fmt.Println("Please provide a Pokemon to inspect")
+		return nil
 	}
 
-	return rand.Float64() < catchChance
+	pm, exists := pokedex[args[0]]
+	if !exists {
+		fmt.Println("you have not caught that pokemon")
+		return nil
+	}
+
+	pokemon.GetStats(pm)
+	return nil
+}
+
+func commandPokedex(conf *config, cache *pokecache.Cache, args ...string) error {
+	fmt.Println("Your Pokedex:")
+	for name, _ := range pokedex {
+		fmt.Printf(" -%s\n", name)
+	}
+
+	return nil
 }
