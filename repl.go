@@ -12,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config, *pokecache.Cache) error
+	callback    func(*config, *pokecache.Cache, ...string) error
 }
 
 type config struct {
@@ -49,26 +49,32 @@ func getCommands() map[string]cliCommand {
 			description: "Show the map of the previous location",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Explore the location passed in the argument",
+			callback:    commandExplore,
+		},
 	}
 
 	return commands
 }
 
-func commandExit(conf *config, cache *pokecache.Cache) error {
+func commandExit(conf *config, cache *pokecache.Cache, args ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config, cache *pokecache.Cache) error {
+func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 	fmt.Println("Usage:\n\n\nhelp: Displays a help message")
 	fmt.Println("exit: Exit the Pokedex")
 	fmt.Println("map: Displays the map of the current location")
 	fmt.Println("mapb: Displays the map of the previous location")
+	fmt.Println("explore <location>: Explore the location passed in the argument")
 	return nil
 }
 
-func commandMap(conf *config, cache *pokecache.Cache) error {
+func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
 	var locationArea location.LocationArea
 
 	for i := 0; i < 20; i++ {
@@ -88,7 +94,7 @@ func commandMap(conf *config, cache *pokecache.Cache) error {
 	return nil
 }
 
-func commandMapb(conf *config, cache *pokecache.Cache) error {
+func commandMapb(conf *config, cache *pokecache.Cache, args ...string) error {
 	locationArea := location.GetLocationArea(conf.next)
 
 	if locationArea.ID <= 1 {
@@ -110,5 +116,30 @@ func commandMapb(conf *config, cache *pokecache.Cache) error {
 		}
 		commandMap(&temp, cache)
 	}
+	return nil
+}
+
+func commandExplore(conf *config, cache *pokecache.Cache, args ...string) error {
+	if len(args) == 0 {
+		fmt.Println("Please provide a location to explore")
+		return nil
+	}
+
+	var locationArea location.LocationArea
+
+	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+	if exists {
+		locationArea = location.UnmarshalData(entry)
+	} else {
+		locationArea = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+	}
+
+	fmt.Printf("Exploring %s...\n", locationArea.Name)
+	fmt.Println("Found Pokemon:")
+
+	for _, pokemon := range locationArea.PokemonEncounters {
+		fmt.Printf("- %s\n", pokemon.Pokemon.Name)
+	}
+
 	return nil
 }

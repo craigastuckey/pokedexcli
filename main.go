@@ -28,7 +28,7 @@ func main() {
 		cleanInput := cleanInput(input)
 
 		if cmd, exists := commands[cleanInput[0]]; exists {
-			cmd.callback(&conf, cache)
+			cmd.callback(&conf, cache, cleanInput[1:]...)
 		} else {
 			fmt.Println("Unknown command")
 		}
