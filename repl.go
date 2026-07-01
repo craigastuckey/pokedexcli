@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 
 	"github.com/craigastuckey/pokedexcli/internal/location"
 	"github.com/craigastuckey/pokedexcli/internal/pokecache"
+	"github.com/craigastuckey/pokedexcli/internal/pokemon"
 )
 
 type cliCommand struct {
@@ -19,6 +21,8 @@ type config struct {
 	next string
 	prev string
 }
+
+var pokedex = make(map[string]pokemon.Pokemon)
 
 func cleanInput(text string) []string {
 	text = strings.TrimSpace(text)
@@ -54,6 +58,11 @@ func getCommands() map[string]cliCommand {
 			description: "Explore the location passed in the argument",
 			callback:    commandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Catch the pokemon passed in the argument",
+			callback:    commandCatch,
+		},
 	}
 
 	return commands
@@ -71,6 +80,7 @@ func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 	fmt.Println("map: Displays the map of the current location")
 	fmt.Println("mapb: Displays the map of the previous location")
 	fmt.Println("explore <location>: Explore the location passed in the argument")
+	fmt.Println("catch <pokemon>: Catch the pokemon passed in the argument")
 	return nil
 }
 
@@ -142,4 +152,41 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...string) error 
 	}
 
 	return nil
+}
+
+func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
+	if len(args) == 0 {
+		fmt.Println("Please provide a Pokemon to catch")
+		return nil
+	}
+
+	var pm pokemon.Pokemon
+
+	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+	if exists {
+		pm = pokemon.UnmarshalData(entry)
+	} else {
+		pm = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]), pokemon.MarshalData(pm))
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", pm.Name)
+
+	if ok := throwPokeball(pm); !ok {
+		fmt.Printf("%s escaped!\n", pm.Name)
+	} else {
+		fmt.Printf("%s was caught!\n", pm.Name)
+		pokedex[pm.Name] = pm
+	}
+	return nil
+}
+
+func throwPokeball(pm pokemon.Pokemon) bool {
+	// Simulate a random chance of catching the Pokemon
+	catchChance := 0.5 // 50% chance to catch
+	if pm.BaseExperience > 100 {
+		catchChance = 0.3 // Harder to catch if base experience is high
+	}
+
+	return rand.Float64() < catchChance
 }
