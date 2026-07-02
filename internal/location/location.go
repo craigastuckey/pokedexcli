@@ -60,24 +60,24 @@ type LocationArea struct {
 	} `json:"pokemon_encounters"`
 }
 
-func GetLocationArea(url string) LocationArea {
+func GetLocationArea(url string) (LocationArea, error) {
 	res, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error fetching data:", err)
+		return LocationArea{}, fmt.Errorf("error fetching data: %v", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		return LocationArea{}, fmt.Errorf("error reading response body: %v", err)
 	}
 	if res.StatusCode != http.StatusOK {
-		fmt.Println("Error: received non-OK HTTP status:", res.Status)
+		return LocationArea{}, fmt.Errorf("error: received non-OK HTTP status: %s", res.Status)
 	}
 	res.Body.Close()
 
 	locationArea := UnmarshalData(body)
 
-	return locationArea
+	return locationArea, nil
 }
 
 func UnmarshalData(data []byte) LocationArea {

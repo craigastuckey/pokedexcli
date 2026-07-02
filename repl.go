@@ -97,6 +97,7 @@ func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 
 func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
 	var locationArea location.LocationArea
+	var err error
 
 	for i := 0; i < 20; i++ {
 		entry, exists := cache.Get(conf.next)
@@ -104,7 +105,11 @@ func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
 			locationArea = location.UnmarshalData(entry)
 			fmt.Println(locationArea.Name)
 		} else {
-			locationArea = location.GetLocationArea(conf.next)
+			locationArea, err = location.GetLocationArea(conf.next)
+			if err != nil {
+				fmt.Println("Location not found")
+				return fmt.Errorf("error fetching location: %w", err)
+			}
 			cache.Add(conf.next, location.MarshalData(locationArea))
 			fmt.Println(locationArea.Name)
 		}
@@ -116,7 +121,11 @@ func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
 }
 
 func commandMapb(conf *config, cache *pokecache.Cache, args ...string) error {
-	locationArea := location.GetLocationArea(conf.next)
+	locationArea, err := location.GetLocationArea(conf.next)
+	if err != nil {
+		fmt.Println("Location not found")
+		return fmt.Errorf("error fetching location: %w", err)
+	}
 
 	if locationArea.ID <= 1 {
 		fmt.Println("you're on the first page")
@@ -147,12 +156,18 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...string) error 
 	}
 
 	var locationArea location.LocationArea
+	var err error
 
 	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
 	if exists {
 		locationArea = location.UnmarshalData(entry)
 	} else {
-		locationArea = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+		locationArea, err = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+		if err != nil {
+			fmt.Println("Location not found")
+			return fmt.Errorf("error fetching location: %w", err)
+		}
+		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]), location.MarshalData(locationArea))
 	}
 
 	fmt.Printf("Exploring %s...\n", locationArea.Name)
