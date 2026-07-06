@@ -22,6 +22,7 @@ type config struct {
 }
 
 var pokedex = make(map[string]pokemon.Pokemon)
+var party = make([]pokemon.Pokemon, 6)
 
 func cleanInput(text string) []string {
 	text = strings.TrimSpace(text)
@@ -72,6 +73,11 @@ func getCommands() map[string]cliCommand {
 			description: "Show the list of caught pokemon",
 			callback:    commandPokedex,
 		},
+		"party": {
+			name:        "party",
+			description: "Show the list of pokemon in your party",
+			callback:    commandParty,
+		},
 	}
 
 	return commands
@@ -92,6 +98,9 @@ func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 	fmt.Println("catch <pokemon>: Catch the pokemon passed in the argument")
 	fmt.Println("inspect <pokemon>: Inspect the pokemon passed in the argument")
 	fmt.Println("pokedex: Displays the list of caught pokemon")
+	fmt.Println("party: Displays the list of pokemon in your party")
+	fmt.Println("party add <pokemon>: Add the pokemon passed in the argument to your party")
+	fmt.Println("party remove <pokemon>: Remove the pokemon passed in the argument from your party")
 	return nil
 }
 
@@ -209,7 +218,13 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
 		fmt.Printf("%s was caught!\n", pm.Name)
 		fmt.Println("You may now inspect it with the inspect command")
 		pokedex[pm.Name] = pm
+		err = pokemon.AddToParty(&party, pm)
+		if err != nil {
+			fmt.Println("Party is full, pokemon added to your pokedex but not your party")
+			return fmt.Errorf("party full: %w", err)
+		}
 	}
+
 	return nil
 }
 
@@ -235,5 +250,44 @@ func commandPokedex(conf *config, cache *pokecache.Cache, args ...string) error 
 		fmt.Printf(" -%s\n", name)
 	}
 
+	return nil
+}
+
+func commandParty(conf *config, cache *pokecache.Cache, args ...string) error {
+	if len(args) == 0 {
+		pokemon.GetParty(&party)
+		return nil
+	}
+
+	switch args[0] {
+	case "add":
+		if len(args) < 2 {
+			fmt.Println("Please provide a Pokemon to add to your party")
+			return nil
+		}
+
+		pm, exists := pokedex[args[1]]
+		if !exists {
+			fmt.Println("you have not caught that pokemon")
+			return nil
+		}
+
+		err := pokemon.AddToParty(&party, pm)
+		if err != nil {
+			fmt.Println("Your party is full, remove a pokemon before adding another")
+			return fmt.Errorf("error adding Pokemon to party: %w", err)
+		}
+		return nil
+	case "remove":
+		if len(args) < 2 {
+			fmt.Println("Please provide a Pokemon to remove from your party")
+			return nil
+		}
+
+		pokemon.RemoveFromParty(&party, args[1])
+		return nil
+	default:
+		fmt.Println("Unknown party command. Use 'party add <pokemon>' or 'party remove <pokemon>'")
+	}
 	return nil
 }

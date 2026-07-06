@@ -350,3 +350,36 @@ func GetStats(pokemon Pokemon) {
 		fmt.Printf("  - %s\n", typ.Type.Name)
 	}
 }
+
+func GetParty(party *[]Pokemon) {
+	for i, pm := range *party {
+		if pm.Name != "" {
+			fmt.Printf("%d. %s\n", i+1, pm.Name)
+		} else {
+			fmt.Printf("%d. Empty Slot\n", i+1)
+		}
+	}
+}
+
+func AddToParty(party *[]Pokemon, pm Pokemon) error {
+	for i := 0; i < len(*party); i++ {
+		if (*party)[i].Name == "" {
+			(*party)[i] = pm
+			fmt.Printf("%s has been added to your party\n", pm.Name)
+			return nil
+		}
+	}
+	return fmt.Errorf("party is full, cannot add %s", pm.Name)
+}
+
+func RemoveFromParty(party *[]Pokemon, name string) error {
+	for i := 0; i < len(*party); i++ {
+		if (*party)[i].Name == name {
+			(*party)[i] = Pokemon{}
+			fmt.Printf("%s has been removed from your party\n", name)
+			return nil
+		}
+	}
+	fmt.Println("That Pokemon is not in your party.")
+	return nil
+}
