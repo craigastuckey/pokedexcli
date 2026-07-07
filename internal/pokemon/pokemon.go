@@ -16,6 +16,7 @@ type Pokemon struct {
 	IsDefault      bool   `json:"is_default"`
 	Order          int    `json:"order"`
 	Weight         int    `json:"weight"`
+	Level          int    `json:"level"`
 	Abilities      []struct {
 		IsHidden bool `json:"is_hidden"`
 		Slot     int  `json:"slot"`
@@ -341,6 +342,7 @@ func ThrowPokeball(pm Pokemon) bool {
 
 func GetStats(pokemon Pokemon) {
 	fmt.Printf("Name: %s\nHeight: %d\nWeight: %d\n", pokemon.Name, pokemon.Height, pokemon.Weight)
+	fmt.Printf("Level: %d\n", pokemon.Level)
 	fmt.Printf("Stats:\n")
 	for _, stat := range pokemon.Stats {
 		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
