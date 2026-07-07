@@ -217,7 +217,6 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
 	} else {
 		fmt.Printf("%s was caught!\n", pm.Name)
 		fmt.Println("You may now inspect it with the inspect command")
-		pm.Level = 1
 		pokedex[pm.Name] = pm
 		err = pokemon.AddToParty(&party, pm)
 		if err != nil {
