@@ -6,17 +6,20 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+
+	"github.com/craigastuckey/pokedexcli/internal/move"
 )
 
 type Pokemon struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	BaseExperience int    `json:"base_experience"`
-	Height         int    `json:"height"`
-	IsDefault      bool   `json:"is_default"`
-	Order          int    `json:"order"`
-	Weight         int    `json:"weight"`
-	Level          int    `json:"level"`
+	ID             int         `json:"id"`
+	Name           string      `json:"name"`
+	BaseExperience int         `json:"base_experience"`
+	Height         int         `json:"height"`
+	IsDefault      bool        `json:"is_default"`
+	Order          int         `json:"order"`
+	Weight         int         `json:"weight"`
+	Level          int         `json:"level"`
+	MoveList       []move.Move `json:"move_list"`
 	Abilities      []struct {
 		IsHidden bool `json:"is_hidden"`
 		Slot     int  `json:"slot"`
@@ -319,6 +322,13 @@ func UnmarshalData(data []byte) Pokemon {
 	if err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
 	}
+	if pokemon.Level == 0 {
+		pokemon.Level = 1
+	}
+	if pokemon.MoveList == nil {
+		pokemon.MoveList = make([]move.Move, 4)
+		AddLevelUpMove(&pokemon)
+	}
 	return pokemon
 }
 
@@ -350,6 +360,10 @@ func GetStats(pokemon Pokemon) {
 	fmt.Printf("Types:\n")
 	for _, typ := range pokemon.Types {
 		fmt.Printf("  - %s\n", typ.Type.Name)
+	}
+	fmt.Printf("Moves:\n")
+	for _, move := range pokemon.MoveList {
+		fmt.Printf("  - %s\n", move.Name)
 	}
 }
 
@@ -383,5 +397,28 @@ func RemoveFromParty(party *[]Pokemon, name string) error {
 		}
 	}
 	fmt.Println("That Pokemon is not in your party.")
+	return nil
+}
+
+func AddLevelUpMove(pokemon *Pokemon) error {
+	var err error
+	for _, m := range pokemon.Moves {
+		if m.VersionGroupDetails[0].MoveLearnMethod.Name == "level-up" && m.VersionGroupDetails[0].LevelLearnedAt == pokemon.Level {
+			for i := 0; i < len(pokemon.MoveList); i++ {
+				if pokemon.MoveList[i].Name == "" {
+					pokemon.MoveList[i], err = move.GetMove(m.Move.URL)
+					if err != nil {
+						return fmt.Errorf("error fetching move data: %w", err)
+					}
+					break
+				}
+				if i == len(pokemon.MoveList)-1 {
+					fmt.Printf("%s already knows 4 moves, cannot learn %s\n", pokemon.Name, m.Move.Name)
+					return fmt.Errorf("%s already knows 4 moves, cannot learn %s", pokemon.Name, m.Move.Name)
+				}
+			}
+		}
+	}
+
 	return nil
 }
