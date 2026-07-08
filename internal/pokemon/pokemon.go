@@ -379,6 +379,10 @@ func GetParty(party *[]Pokemon) {
 
 func AddToParty(party *[]Pokemon, pm Pokemon) error {
 	for i := 0; i < len(*party); i++ {
+		if (*party)[i].Name == pm.Name {
+			fmt.Printf("%s is already in your party\n", pm.Name)
+			return nil
+		}
 		if (*party)[i].Name == "" {
 			(*party)[i] = pm
 			fmt.Printf("%s has been added to your party\n", pm.Name)
