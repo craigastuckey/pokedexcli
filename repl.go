@@ -8,12 +8,13 @@ import (
 	"github.com/craigastuckey/pokedexcli/internal/location"
 	"github.com/craigastuckey/pokedexcli/internal/pokecache"
 	"github.com/craigastuckey/pokedexcli/internal/pokemon"
+	"github.com/nexidian/gocliselect"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config, *pokecache.Cache, ...string) error
+	callback    func(*config, *pokecache.Cache, ...any) error
 }
 
 type config struct {
@@ -83,13 +84,13 @@ func getCommands() map[string]cliCommand {
 	return commands
 }
 
-func commandExit(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandExit(conf *config, cache *pokecache.Cache, args ...any) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandHelp(conf *config, cache *pokecache.Cache, args ...any) error {
 	fmt.Println("Usage:\n\n\nhelp: Displays a help message")
 	fmt.Println("exit: Exit the Pokedex")
 	fmt.Println("map: Displays the map of the current location")
@@ -104,7 +105,7 @@ func commandHelp(conf *config, cache *pokecache.Cache, args ...string) error {
 	return nil
 }
 
-func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandMap(conf *config, cache *pokecache.Cache, args ...any) error {
 	var locationArea location.LocationArea
 	var err error
 
@@ -129,7 +130,7 @@ func commandMap(conf *config, cache *pokecache.Cache, args ...string) error {
 	return nil
 }
 
-func commandMapb(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandMapb(conf *config, cache *pokecache.Cache, args ...any) error {
 	locationArea, err := location.GetLocationArea(conf.next)
 	if err != nil {
 		fmt.Println("Location not found")
@@ -158,7 +159,7 @@ func commandMapb(conf *config, cache *pokecache.Cache, args ...string) error {
 	return nil
 }
 
-func commandExplore(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 	if len(args) == 0 {
 		fmt.Println("Please provide a location to explore")
 		return nil
@@ -167,29 +168,48 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...string) error 
 	var locationArea location.LocationArea
 	var err error
 
-	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]))
 	if exists {
 		locationArea = location.UnmarshalData(entry)
 	} else {
-		locationArea, err = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]))
+		locationArea, err = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]))
 		if err != nil {
 			fmt.Println("Location not found")
 			return fmt.Errorf("error fetching location: %w", err)
 		}
-		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", args[0]), location.MarshalData(locationArea))
+		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]), location.MarshalData(locationArea))
 	}
 
-	fmt.Printf("Exploring %s...\n", locationArea.Name)
-	fmt.Println("Found Pokemon:")
+	menu := gocliselect.NewMenu(fmt.Sprintf("Exploring %s...\n", locationArea.Name))
+	menu.AddItem("Explore next location", "next")
+	menu.AddItem("Explore previous location", "prev")
+	menu.AddItem("Encounter a Pokemon", "encounter")
+	menu.AddItem("Back to map", "map")
 
-	for _, pokemon := range locationArea.PokemonEncounters {
-		fmt.Printf("- %s\n", pokemon.Pokemon.Name)
+	choice := menu.Display()
+	switch choice {
+	case "next":
+		conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
+		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+2)
+		next := locationArea.ID + 1
+		commandExplore(conf, cache, next)
+	case "prev":
+		conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-2)
+		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
+		prev := locationArea.ID - 1
+		commandExplore(conf, cache, prev)
+	case "encounter":
+		location.Encounter(locationArea)
+	case "map":
+		return nil
+	default:
+		fmt.Println("Invalid choice")
 	}
 
 	return nil
 }
 
-func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandCatch(conf *config, cache *pokecache.Cache, args ...any) error {
 	if len(args) == 0 {
 		fmt.Println("Please provide a Pokemon to catch")
 		return nil
@@ -198,16 +218,16 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
 	var pm pokemon.Pokemon
 	var err error
 
-	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]))
 	if exists {
 		pm = pokemon.UnmarshalData(entry)
 	} else {
-		pm, err = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]))
+		pm, err = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]))
 		if err != nil {
 			fmt.Println("Pokemon not found")
 			return fmt.Errorf("error fetching Pokemon: %w", err)
 		}
-		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s/", args[0]), pokemon.MarshalData(pm))
+		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]), pokemon.MarshalData(pm))
 	}
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", pm.Name)
@@ -228,13 +248,19 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...string) error {
 	return nil
 }
 
-func commandInspect(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandInspect(conf *config, cache *pokecache.Cache, args ...any) error {
 	if len(args) == 0 {
 		fmt.Println("Please provide a Pokemon to inspect")
 		return nil
 	}
 
-	pm, exists := pokedex[args[0]]
+	name, ok := args[0].(string)
+	if !ok {
+		fmt.Println("invalid pokemon name")
+		return nil
+	}
+
+	pm, exists := pokedex[name]
 	if !exists {
 		fmt.Println("you have not caught that pokemon")
 		return nil
@@ -244,16 +270,16 @@ func commandInspect(conf *config, cache *pokecache.Cache, args ...string) error 
 	return nil
 }
 
-func commandPokedex(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandPokedex(conf *config, cache *pokecache.Cache, args ...any) error {
 	fmt.Println("Your Pokedex:")
-	for name, _ := range pokedex {
+	for name := range pokedex {
 		fmt.Printf(" -%s\n", name)
 	}
 
 	return nil
 }
 
-func commandParty(conf *config, cache *pokecache.Cache, args ...string) error {
+func commandParty(conf *config, cache *pokecache.Cache, args ...any) error {
 	if len(args) == 0 {
 		pokemon.GetParty(&party)
 		return nil
@@ -265,8 +291,13 @@ func commandParty(conf *config, cache *pokecache.Cache, args ...string) error {
 			fmt.Println("Please provide a Pokemon to add to your party")
 			return nil
 		}
+		name, ok := args[1].(string)
+		if !ok {
+			fmt.Println("invalid pokemon name")
+			return nil
+		}
 
-		pm, exists := pokedex[args[1]]
+		pm, exists := pokedex[name]
 		if !exists {
 			fmt.Println("you have not caught that pokemon")
 			return nil
@@ -283,8 +314,12 @@ func commandParty(conf *config, cache *pokecache.Cache, args ...string) error {
 			fmt.Println("Please provide a Pokemon to remove from your party")
 			return nil
 		}
-
-		pokemon.RemoveFromParty(&party, args[1])
+		name, ok := args[1].(string)
+		if !ok {
+			fmt.Println("invalid pokemon name")
+			return nil
+		}
+		pokemon.RemoveFromParty(&party, name)
 		return nil
 	default:
 		fmt.Println("Unknown party command. Use 'party add <pokemon>' or 'party remove <pokemon>'")

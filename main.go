@@ -5,7 +5,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/craigastuckey/pokedexcli/internal/pokecache"
-	"github.com/nexidian/gocliselect"
 )
 
 func main() {
@@ -24,16 +23,6 @@ func main() {
 	cache := pokecache.NewCache(5)
 
 	fmt.Println("Welcome to the Pokedex!")
-	menu := gocliselect.NewMenu("Continue or Exit?")
-	menu.AddItem("Continue", "c")
-	menu.AddItem("Exit", "e")
-
-	choice := menu.Display()
-
-	if choice == "e" {
-		fmt.Println("Exiting...")
-		return
-	}
 
 	for {
 		input, err := rl.Readline()
@@ -47,7 +36,11 @@ func main() {
 		}
 
 		if cmd, exists := commands[cleanInput[0]]; exists {
-			cmd.callback(&conf, cache, cleanInput[1:]...)
+			args := make([]any, len(cleanInput[1:]))
+			for i, arg := range cleanInput[1:] {
+				args[i] = arg
+			}
+			cmd.callback(&conf, cache, args...)
 		} else {
 			fmt.Println("Unknown command")
 		}

@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
+	"time"
+
+	"github.com/nexidian/gocliselect"
 )
 
 type LocationArea struct {
@@ -95,4 +99,37 @@ func MarshalData(locationArea LocationArea) []byte {
 		fmt.Println("Error marshaling JSON:", err)
 	}
 	return data
+}
+
+func Encounter(locationArea LocationArea) {
+	fmt.Printf("Encountering Pokemon")
+	ch := make(chan struct{})
+	go func() {
+		for i := 0; i < 3; i++ {
+			fmt.Print(".")
+			time.Sleep(1 * time.Second)
+		}
+		fmt.Println()
+		ch <- struct{}{}
+	}()
+
+	pokemon := locationArea.PokemonEncounters[rand.Intn(len(locationArea.PokemonEncounters))].Pokemon
+	menu := gocliselect.NewMenu(fmt.Sprintf("You encountered a wild %s!\n", pokemon.Name))
+	menu.AddItem("Throw a Pokeball", "throw")
+	menu.AddItem("Battle", "battle")
+	menu.AddItem("Run away", "run")
+
+	<-ch
+
+	choice := menu.Display()
+	switch choice {
+	case "throw":
+		fmt.Printf("You threw a Pokeball at %s!\n", pokemon.Name)
+	case "battle":
+		fmt.Printf("You are battling %s!\n", pokemon.Name)
+	case "run":
+		fmt.Println("You ran away!")
+	default:
+		fmt.Println("Invalid choice")
+	}
 }
