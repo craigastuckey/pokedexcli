@@ -186,36 +186,38 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 	menu.AddItem("Encounter a Pokemon", "encounter")
 	menu.AddItem("Back to map", "map")
 
-	
-	choice := menu.Display()
-	switch choice {
-	case "next":
-		conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
-		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+2)
-		next := locationArea.ID + 1
-		commandExplore(conf, cache, next)
-	case "prev":
-		conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-2)
-		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
-		prev := locationArea.ID - 1
-		commandExplore(conf, cache, prev)
-	case "encounter":
-		action := location.Encounter(locationArea)
-		switch action[0] {
-		case "throw":
-			commandCatch(conf, cache, action[1])
-		case "battle":
-			fmt.Println("Battle feature not implemented yet")
-		case "run":
-			fmt.Println("You ran away from the wild", action[1])
+	for {
+		choice := menu.Display()
+		switch choice {
+		case "next":
+			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
+			conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+2)
+			next := locationArea.ID + 1
+			commandExplore(conf, cache, next)
+			return nil
+		case "prev":
+			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-2)
+			conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
+			prev := locationArea.ID - 1
+			commandExplore(conf, cache, prev)
+			return nil
+		case "encounter":
+			action := location.Encounter(locationArea)
+			switch action[0] {
+			case "throw":
+				commandCatch(conf, cache, action[1])
+			case "battle":
+				fmt.Println("Battle feature not implemented yet")
+			case "run":
+				fmt.Println("You ran away from the wild", action[1])
+			}
+		case "map":
+			return nil
+		default:
+			fmt.Println("Invalid choice")
+			return fmt.Errorf("invalid explore choice")
 		}
-	case "map":
-		return nil
-	default:
-		fmt.Println("Invalid choice")
 	}
-
-	return nil
 }
 
 func commandCatch(conf *config, cache *pokecache.Cache, args ...any) error {
