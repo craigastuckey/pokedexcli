@@ -186,6 +186,7 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 	menu.AddItem("Encounter a Pokemon", "encounter")
 	menu.AddItem("Back to map", "map")
 
+	
 	choice := menu.Display()
 	switch choice {
 	case "next":
@@ -199,7 +200,15 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 		prev := locationArea.ID - 1
 		commandExplore(conf, cache, prev)
 	case "encounter":
-		location.Encounter(locationArea)
+		action := location.Encounter(locationArea)
+		switch action[0] {
+		case "throw":
+			commandCatch(conf, cache, action[1])
+		case "battle":
+			fmt.Println("Battle feature not implemented yet")
+		case "run":
+			fmt.Println("You ran away from the wild", action[1])
+		}
 	case "map":
 		return nil
 	default:

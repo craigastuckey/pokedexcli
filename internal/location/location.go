@@ -101,7 +101,7 @@ func MarshalData(locationArea LocationArea) []byte {
 	return data
 }
 
-func Encounter(locationArea LocationArea) {
+func Encounter(locationArea LocationArea) []string {
 	fmt.Printf("Encountering Pokemon")
 	ch := make(chan struct{})
 	go func() {
@@ -122,14 +122,5 @@ func Encounter(locationArea LocationArea) {
 	<-ch
 
 	choice := menu.Display()
-	switch choice {
-	case "throw":
-		fmt.Printf("You threw a Pokeball at %s!\n", pokemon.Name)
-	case "battle":
-		fmt.Printf("You are battling %s!\n", pokemon.Name)
-	case "run":
-		fmt.Println("You ran away!")
-	default:
-		fmt.Println("Invalid choice")
-	}
+	return []string{choice, pokemon.Name}
 }
