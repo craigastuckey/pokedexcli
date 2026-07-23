@@ -122,5 +122,5 @@ func Encounter(locationArea LocationArea) []string {
 	<-ch
 
 	choice := menu.Display()
-	return []string{choice, pokemon.Name}
+	return []string{choice, pokemon.Name} 
 }

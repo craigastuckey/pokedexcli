@@ -7,6 +7,8 @@ import (
 	"github.com/craigastuckey/pokedexcli/internal/pokecache"
 )
 
+const startUrl string = "https://pokeapi.co/api/v2/location-area/1/"
+
 func main() {
 	rl, err := readline.New("Pokedex > ")
 	if err != nil {
@@ -15,7 +17,7 @@ func main() {
 	defer rl.Close()
 
 	conf := config{
-		next: "https://pokeapi.co/api/v2/location-area/1/",
+		next: startUrl,
 		prev: "",
 	}
 

@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/craigastuckey/pokedexcli/internal/move"
 )
@@ -425,4 +426,13 @@ func AddLevelUpMove(pokemon *Pokemon) error {
 	}
 
 	return nil
+}
+
+func Battle(party *[]Pokemon, wildPokemon *Pokemon) {
+	fmt.Println("Battling the wild ", wildPokemon.Name, "!")
+	time.Sleep(1 * time.Second)
+	fmt.Println("You sent out ", (*party)[0].Name, "!")
+
+	// do this later
+	//currentPokemon := (*party)[0]
 }

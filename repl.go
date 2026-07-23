@@ -25,6 +25,9 @@ type config struct {
 var pokedex = make(map[string]pokemon.Pokemon)
 var party = make([]pokemon.Pokemon, 6)
 
+const locationAreaUrl string = "https://pokeapi.co/api/v2/location-area"
+const pokemonUrl string = "https://pokeapi.co/api/v2/pokemon"
+
 func cleanInput(text string) []string {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
@@ -125,7 +128,7 @@ func commandMap(conf *config, cache *pokecache.Cache, args ...any) error {
 		}
 
 		conf.prev = conf.next
-		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+1)
+		conf.next = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID+1)
 	}
 	return nil
 }
@@ -145,14 +148,14 @@ func commandMapb(conf *config, cache *pokecache.Cache, args ...any) error {
 			next: conf.next,
 			prev: conf.prev,
 		}
-		temp.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-20)
-		conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-20)
+		temp.next = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID-20)
+		conf.next = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID-20)
 		if locationArea.ID-21 <= 0 {
 			temp.prev = ""
 			conf.prev = ""
 		} else {
-			temp.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-21)
-			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-21)
+			temp.prev = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID-21)
+			conf.prev = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID-21)
 		}
 		commandMap(&temp, cache)
 	}
@@ -168,16 +171,16 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 	var locationArea location.LocationArea
 	var err error
 
-	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]))
+	entry, exists := cache.Get(fmt.Sprintf("%s/%v/", locationAreaUrl, args[0]))
 	if exists {
 		locationArea = location.UnmarshalData(entry)
 	} else {
-		locationArea, err = location.GetLocationArea(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]))
+		locationArea, err = location.GetLocationArea(fmt.Sprintf("%s/%v/", locationAreaUrl, args[0]))
 		if err != nil {
 			fmt.Println("Location not found")
 			return fmt.Errorf("error fetching location: %w", err)
 		}
-		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%v/", args[0]), location.MarshalData(locationArea))
+		cache.Add(fmt.Sprintf("%s/%v/", locationAreaUrl, args[0]), location.MarshalData(locationArea))
 	}
 
 	menu := gocliselect.NewMenu(fmt.Sprintf("Exploring %s...\n", locationArea.Name))
@@ -190,14 +193,14 @@ func commandExplore(conf *config, cache *pokecache.Cache, args ...any) error {
 		choice := menu.Display()
 		switch choice {
 		case "next":
-			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
-			conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID+2)
+			conf.prev = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID)
+			conf.next = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID+2)
 			next := locationArea.ID + 1
 			commandExplore(conf, cache, next)
 			return nil
 		case "prev":
-			conf.prev = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID-2)
-			conf.next = fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", locationArea.ID)
+			conf.prev = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID-2)
+			conf.next = fmt.Sprintf("%s/%d/", locationAreaUrl, locationArea.ID)
 			prev := locationArea.ID - 1
 			commandExplore(conf, cache, prev)
 			return nil
@@ -229,16 +232,16 @@ func commandCatch(conf *config, cache *pokecache.Cache, args ...any) error {
 	var pm pokemon.Pokemon
 	var err error
 
-	entry, exists := cache.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]))
+	entry, exists := cache.Get(fmt.Sprintf("%s/%v/", pokemonUrl, args[0]))
 	if exists {
 		pm = pokemon.UnmarshalData(entry)
 	} else {
-		pm, err = pokemon.GetPokemon(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]))
+		pm, err = pokemon.GetPokemon(fmt.Sprintf("%s/%v/", pokemonUrl, args[0]))
 		if err != nil {
 			fmt.Println("Pokemon not found")
 			return fmt.Errorf("error fetching Pokemon: %w", err)
 		}
-		cache.Add(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", args[0]), pokemon.MarshalData(pm))
+		cache.Add(fmt.Sprintf("%s/%v/", pokemonUrl, args[0]), pokemon.MarshalData(pm))
 	}
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", pm.Name)
